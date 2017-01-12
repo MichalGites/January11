@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.telephony.SmsMessage;
 import android.widget.Toast;
 
 import butterknife.ButterKnife;
@@ -16,13 +17,24 @@ public class MainActivity extends AppCompatActivity {
     // filtr broadcastu
     // String w nawiasie jest zaczerpniety z listy filtrów ze StackOverflow
     // zkomentowane do 2 sposobu
-//    private IntentFilter filter = new IntentFilter("android.provider.Telephony.SMS_RECEIVED");
+    private IntentFilter filter = new IntentFilter("android.provider.Telephony.SMS_RECEIVED");
     // ciało broadcastu
     private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             // context przychodzi wiec nie musimy odwolywac sie do activity
             Toast.makeText(context, "Przyszedł SMS!", Toast.LENGTH_LONG).show();
+
+            // odczyt tresci smsa, troche trudniejsze (razem z petla)  - takze permisja w manifescie
+
+            final Object[] obj = (Object[]) intent.getExtras().get("pdus");
+
+            for (Object o : obj){
+                SmsMessage currentMessage = SmsMessage.createFromPdu((byte[]) o);
+                String message = currentMessage.getDisplayMessageBody();
+                Toast.makeText(context, "Treść SMS: " + message, Toast.LENGTH_LONG).show();
+            }
+
             // pdus slowo kluczowe pod ktorym kryje sie tresc smsa chyba
         }
     };
@@ -33,7 +45,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
         // powiązanie filtra z ciałem - rejestracja Receivera - drugi sposób rejestracji w manifeście się robi
-//        registerReceiver(broadcastReceiver, filter);
+        registerReceiver(broadcastReceiver, filter);
         // trzeba jeszcze zapytac uzytkownika o zgode na otwarcie smsa czyli tzw permisja na odbieranie smsow
         // permisje dodajemy w manifeśie - linijka uses permission
     }
